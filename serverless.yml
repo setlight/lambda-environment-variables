@@ -1,0 +1,28 @@
+service: hello-api-demo
+
+provider:
+  name: aws
+  runtime: nodejs6.10
+  region: us-west-2
+
+functions:
+  create-hello:
+    handler: handler.hello
+    environment:
+      method: "POST /HELLO"
+
+  index-hello:
+    handler: handler.hello
+    environment:
+      method: "GET /HELLO"
+
+  show-hello:
+    handler: handler.hello
+    environment:
+      method: "GET /HELLO/{id}"
+
+  update-hello:
+    handler: handler.hello
+    environment:
+      method: "PATCH /HELLO/{id}"
+
