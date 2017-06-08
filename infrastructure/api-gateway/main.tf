@@ -1,44 +1,66 @@
 resource "aws_api_gateway_rest_api" "rest_api" {
   name = "HelloApi"
-  description = "This is an API to proof the concept of creating API gateway with Terraform"
+  description = "Demonstration of Terraform + API Gateway"
 }
 
-resource "aws_api_gateway_resource" "api_resource" {
+# Resource /hello
+resource "aws_api_gateway_resource" "hello_index" {
   rest_api_id = "${aws_api_gateway_rest_api.rest_api.id}"
   parent_id = "${aws_api_gateway_rest_api.rest_api.root_resource_id}"
-  path_part = "${var.path}"
+  path_part = "hello"
 }
 
-resource "aws_api_gateway_method" "api_method" {
+# Resource /hello/{id}
+resource "aws_api_gateway_resource" "hello_id" {
   rest_api_id = "${aws_api_gateway_rest_api.rest_api.id}"
-  resource_id = "${aws_api_gateway_resource.api_resource.id}"
-  http_method = "${var.method}"
-  authorization = "NONE"
+  parent_id = "${aws_api_gateway_resource.hello_index.id}"
+  path_part = "{id}"
 }
 
-resource "aws_api_gateway_integration" "api_integration" {
+# ===============================================
+# Endpoints
+# ===============================================
+
+module "create-hello" {
+  source = "./api-method"
+
   rest_api_id = "${aws_api_gateway_rest_api.rest_api.id}"
-  resource_id = "${aws_api_gateway_resource.api_resource.id}"
-  http_method = "${aws_api_gateway_method.api_method.http_method}"
-  integration_http_method = "POST"
-  type = "AWS_PROXY"
-  uri = "arn:aws:apigateway:${var.aws_region}:lambda:path/2015-03-31/functions/${var.lambda_arn}/invocations"
+  api_resource_id = "${aws_api_gateway_resource.hello_index.id}"
+  api_resource_path = "${aws_api_gateway_resource.hello_index.path}"
+  api_method = "POST"
+  lambda_name = "hello-api-demo-dev-create-hello"
+  stage = "dev"
 }
 
-resource "aws_api_gateway_deployment" "api_deployment" {
+module "index-hello" {
+  source = "./api-method"
+
   rest_api_id = "${aws_api_gateway_rest_api.rest_api.id}"
-  stage_name = "${var.stage}"
-
-  depends_on = [
-    "aws_api_gateway_method.api_method",
-    "aws_api_gateway_integration.api_integration"
-  ]
+  api_resource_id = "${aws_api_gateway_resource.hello_index.id}"
+  api_resource_path = "${aws_api_gateway_resource.hello_index.path}"
+  api_method = "GET"
+  lambda_name = "hello-api-demo-dev-index-hello"
+  stage = "dev"
 }
 
-resource "aws_lambda_permission" "allow_api_gateway" {
-  function_name = "hello-dev-hello"
-  statement_id  = "AllowExecutionFromApiGateway"
-  action        = "lambda:InvokeFunction"
-  principal     = "apigateway.amazonaws.com"
-  source_arn    = "arn:aws:execute-api:${var.aws_region}:745715572008:${aws_api_gateway_rest_api.rest_api.id}/*/${aws_api_gateway_method.api_method.http_method}${aws_api_gateway_resource.api_resource.path}"
+module "show-hello" {
+  source = "./api-method"
+
+  rest_api_id = "${aws_api_gateway_rest_api.rest_api.id}"
+  api_resource_id = "${aws_api_gateway_resource.hello_id.id}"
+  api_resource_path = "${aws_api_gateway_resource.hello_id.path}"
+  api_method = "GET"
+  lambda_name = "hello-api-demo-dev-show-hello"
+  stage = "dev"
+}
+
+module "update-hello" {
+  source = "./api-method"
+
+  rest_api_id = "${aws_api_gateway_rest_api.rest_api.id}"
+  api_resource_id = "${aws_api_gateway_resource.hello_id.id}"
+  api_resource_path = "${aws_api_gateway_resource.hello_id.path}"
+  api_method = "PATCH"
+  lambda_name = "hello-api-demo-dev-update-hello"
+  stage = "dev"
 }

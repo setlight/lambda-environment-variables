@@ -1,13 +1,7 @@
 provider "aws" {
-  region = "us-east-2"
+  region = "us-west-2"
 }
 
-module "api" {
+module "api-gateway" {
   source = "./api-gateway"
-
-  aws_region = "us-east-2"
-  stage = "dev"
-  path = "hello"
-  method = "GET"
-  lambda_arn = "arn:aws:lambda:us-east-2:745715572008:function:hello-dev-hello"
 }
